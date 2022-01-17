@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">CapteurEnvoieDonnees</string>
+    <string name="title_sample">Sample</string>
+    <string name="sample_fragment_text">Welcome to the sample fragment.</string>
+</resources>

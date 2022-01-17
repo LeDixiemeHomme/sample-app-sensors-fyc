@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+<!--    <item-->
+<!--        android:id="@+id/navigation_accelerometer"-->
+<!--        android:icon="@drawable/outline_edgesensor_high_black_24"-->
+<!--        android:title="@string/title_accelerometer" />-->
+
+<!--    <item-->
+<!--        android:id="@+id/navigation_proximity"-->
+<!--        android:icon="@drawable/baseline_sensors_black_24dp"-->
+<!--        android:title="@string/title_proximity" />-->
+
+<!--    <item-->
+<!--        android:id="@+id/navigation_luminosity"-->
+<!--        android:icon="@drawable/baseline_light_mode_black_48"-->
+<!--        android:title="@string/title_luminosity" />-->
+
+<!--    <item-->
+<!--        android:id="@+id/navigation_temperature"-->
+<!--        android:icon="@drawable/baseline_device_thermostat_black_48"-->
+<!--        android:title="@string/title_thermostat" />-->
+
+<!--    <item-->
+<!--        android:id="@+id/navigation_compass"-->
+<!--        android:icon="@drawable/baseline_explore_black_48"-->
+<!--        android:title="@string/title_compass" />-->
+</menu>
