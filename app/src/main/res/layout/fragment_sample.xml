@@ -27,6 +27,12 @@
             android:text="@string/sample_fragment_text"
             android:textSize="20sp" />
 
+        <Button
+            android:id="@+id/button_send"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/send_button_text" />
+
 
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
