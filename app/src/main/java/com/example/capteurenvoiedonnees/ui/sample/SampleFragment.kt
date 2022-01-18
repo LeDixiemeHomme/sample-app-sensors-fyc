@@ -10,7 +10,6 @@ import com.example.capteurenvoiedonnees.databinding.FragmentSampleBinding
 
 class SampleFragment: Fragment() {
 
-    private lateinit var sampleViewModel: SampleViewModel
     private var _binding: FragmentSampleBinding? = null
 
     private val binding get() = _binding!!
@@ -20,9 +19,6 @@ class SampleFragment: Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        sampleViewModel =
-            ViewModelProvider(this).get(SampleViewModel::class.java)
-
         _binding = FragmentSampleBinding.inflate(inflater, container, false)
 
         return binding.root
