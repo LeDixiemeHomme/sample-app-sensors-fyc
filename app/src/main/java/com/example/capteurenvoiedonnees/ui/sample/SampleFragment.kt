@@ -21,8 +21,12 @@ class SampleFragment: Fragment(), SensorEventListener {
     private val binding get() = _binding!!
 
     private var sensorManager: SensorManager? = null
-    private var accelerometer: Sensor? = null
-    private var linearAcceleration: Sensor? = null
+
+    // liste des capteurs que l'on va utiliser
+    private val listOfSensorType: List<Int> = listOf(
+        Sensor.TYPE_LINEAR_ACCELERATION,
+        Sensor.TYPE_GYROSCOPE
+    )
 
     private var currentX: TextView? = null
     private var currentY:TextView? = null
@@ -37,17 +41,23 @@ class SampleFragment: Fragment(), SensorEventListener {
 
         sensorManager = this.activity?.getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
+        // enregistre dans le SensorManager les capteurs de notre liste
+        for (sensorType in listOfSensorType){
+            registerSensorType(sensorType = sensorType)
+        }
+
+        return binding.root
+    }
+
+    private fun registerSensorType(sensorType: Int) {
         sensorManager?.let { sensorManager ->
-            if (sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION) != null && sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) != null) {
-                accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-                linearAcceleration = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
-                sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL)
-                sensorManager.registerListener(this, linearAcceleration, SensorManager.SENSOR_DELAY_NORMAL)
+            val sensor: Sensor? = sensorManager.getDefaultSensor(sensorType)
+            if (sensor != null) {
+                sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL)
             } else {
-                Toast.makeText(context, "LINEAR ACCELERATION OR ACCELEROMETER SENSORS NOT AVAILABLE", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "NO SENSOR FOUND FOR $sensorType IN SENSOR MANAGER", Toast.LENGTH_LONG).show()
             }
         }
-        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -63,6 +73,11 @@ class SampleFragment: Fragment(), SensorEventListener {
             val yValue = event.values[1]
             val zValue = event.values[2]
             Log.d("SENSOR", "${event.sensor.stringType} : x=$xValue, y=$yValue, z=$zValue")
+            if (event.sensor.stringType.equals("android.sensor.linear_acceleration")) {
+                currentX?.text = "$xValue"
+                currentY?.text = "$yValue"
+                currentZ?.text = "$zValue"
+            }
         }
     }
 
@@ -74,7 +89,9 @@ class SampleFragment: Fragment(), SensorEventListener {
 
     override fun onResume() {
         super.onResume()
-        sensorManager?.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL)
+        for (sensorType in listOfSensorType){
+            registerSensorType(sensorType = sensorType)
+        }
     }
 
     override fun onDestroyView() {
