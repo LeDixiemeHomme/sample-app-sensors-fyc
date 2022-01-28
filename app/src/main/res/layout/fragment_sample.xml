@@ -22,7 +22,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="#3D9CF9"
+            android:background="@color/custom_blue"
             android:padding="2dp"
             android:gravity="center|top"
             android:orientation="vertical" >
@@ -31,7 +31,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="@string/text_acc_value"
+                android:text="@string/text_linea_value"
                 android:textSize="20sp" />
 
             <LinearLayout
@@ -58,7 +58,7 @@
                         android:textSize="15sp" />
 
                     <TextView
-                        android:id="@+id/accX"
+                        android:id="@+id/linea_x"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10sp"
@@ -83,7 +83,7 @@
                         android:textSize="15sp" />
 
                     <TextView
-                        android:id="@+id/accY"
+                        android:id="@+id/linea_y"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10sp"
@@ -108,7 +108,7 @@
                         android:textSize="15sp" />
 
                     <TextView
-                        android:id="@+id/accZ"
+                        android:id="@+id/linea_z"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10sp"
@@ -122,7 +122,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="#3D9CF9"
+            android:background="@color/custom_blue"
             android:padding="2dp"
             android:gravity="center|top"
             android:layout_marginTop="20sp"
@@ -221,9 +221,10 @@
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/number_of_sit_upper_layout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="#3D9CF9"
+            android:background="@color/custom_blue"
             android:gravity="center|top"
             android:layout_marginTop="20sp"
             android:orientation="vertical" >
@@ -236,15 +237,16 @@
                 android:textSize="20sp" />
 
             <LinearLayout
+                android:id="@+id/number_of_sit_layout"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="#3D9CF9"
+                android:background="@color/custom_blue"
                 android:gravity="center|top"
                 android:layout_marginTop="10sp"
                 android:orientation="horizontal" >
 
                 <TextView
-                    android:id="@+id/numberOfSit"
+                    android:id="@+id/number_of_sit"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
@@ -262,9 +264,10 @@
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/current_move_layout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="#3D9CF9"
+            android:background="@color/custom_blue"
             android:gravity="center|top"
             android:layout_marginTop="20sp"
             android:orientation="vertical" >

@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">CapteurEnvoieDonnees</string>
     <string name="title_sample">Sample</string>
-    <string name="text_acc_value">Valeurs de l\'accéléromètre.</string>
+    <string name="text_linea_value">Valeurs de l\'accéléromètre.</string>
     <string name="text_gyro_value">Valeurs du gyroscope.</string>
     <string name="text_number_sit">Nombre de position assise :</string>
     <string name="text_appro_move">Mouvement approximatif :</string>
@@ -10,5 +10,7 @@
     <string name="move_down">S\'assoit</string>
     <string name="move_top">Levé</string>
     <string name="move_bottom">Assis</string>
+    <string name="move_right">Tourne à droite</string>
+    <string name="move_left">Tourne à gauche</string>
     <string name="time">fois</string>
 </resources>
