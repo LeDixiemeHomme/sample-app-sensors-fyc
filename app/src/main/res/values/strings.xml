@@ -10,7 +10,5 @@
     <string name="move_down">S\'assoit</string>
     <string name="move_top">Levé</string>
     <string name="move_bottom">Assis</string>
-    <string name="move_right">Tourne à droite</string>
-    <string name="move_left">Tourne à gauche</string>
     <string name="time">fois</string>
 </resources>

@@ -19,8 +19,6 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import com.example.capteurenvoiedonnees.R
 import com.example.capteurenvoiedonnees.databinding.FragmentSampleBinding
-import kotlin.math.pow
-import kotlin.math.sqrt
 
 
 class SampleFragment: Fragment(), SensorEventListener {
@@ -50,36 +48,32 @@ class SampleFragment: Fragment(), SensorEventListener {
     private var numberOfSitUpperLayout:LinearLayout? = null
     private var currentMoveLayout:LinearLayout? = null
 
-    private val neutral: Double = 0.0
-    private val rangeNeutral: Double = 0.30
-
     // les valeurs affichable des mouvements possible
     private var possibleMove: Map<Int, String> = mapOf()
+
+    // la valeur neutre qui est censé représenter l'état de non mouvement
+    private val neutral: Double = 0.0
+
+    // la valeur des ensembles de valeurs acceptables pour considerer qu'une valeur est neutre
+    private val rangeNeutral: Double = 0.31
 
     // les valeurs des seuils minimum et maximum déterminés arbitrairement par observation pour les données générées
     private val thresholds: MutableMap<String, Double> =
         mutableMapOf(
             "minLineaY" to -0.85,
-            "maxLineaY" to 1.15,
-            "minLineaAmplitude" to 0.0,
-            "maxLineaAmplitude" to 0.0,
-            "minGyroX" to 0.0,
-            "maxGyroX" to 0.0
+            "maxLineaY" to 1.0,
+            "minGyroX" to -1.10,
+            "maxGyroX" to 1.20
         )
 
     // les valeurs des ensembles de valeurs acceptables pour considerer qu'une valeur est egale a un seuil
     private val ranges: MutableMap<String, Double> =
         mutableMapOf(
             "minLineaY" to 0.3,
-            "maxLineaY" to 0.25,
-            "minLineaAmplitude" to 0.0,
-            "maxLineaAmplitude" to 0.0,
-            "minGyroX" to 0.0,
-            "maxGyroX" to 0.0
+            "maxLineaY" to 0.3,
+            "minGyroX" to 0.25,
+            "maxGyroX" to 0.25
         )
-
-    // temps quand le seuil minimum à été atteint, donc le mouvement de s'asseoir à peut etre commencé
-    private var timeStartDetectMoveInMillis: Long? = null
 
     // durée moyenne en millisecondes pendant laquelle le seuil maximal doit être atteint pour considérer que le mouvement est de s'asseoir
     private var durationMinMaxInMillis: Long = 500
@@ -87,22 +81,23 @@ class SampleFragment: Fragment(), SensorEventListener {
     // durée moyenne en millisecondes totale pendant laquelle le seuil neutre doit être atteint pour considérer que le mouvement de s'asseoir est terminé
     private var durationTotalOfSitMove: Long = 1500
 
-    // temps quand le seuil maximum devrait être atteint pour considérer que le mouvement en cours est de s'assoier
+    // temps quand le seuil maximum devrait être atteint pour considérer que le mouvement en cours est de s'asseoir
     // (il sera égale à timeStartDetectMoveInMillis + durationMinMaxInMillis)
     private var timeToMaxMinInMillis: Long? = null
 
-    // temps quand le seuil neutre devrait être atteint pour considérer que le mouvement de s'assoier est terminé
+    // temps quand le seuil neutre devrait être atteint pour considérer que le mouvement de s'asseoir est terminé
     // (il sera égale à timeStartDetectMoveInMillis + durationTotalOfSitMove)
     private var timeToEndMoveInMillis: Long? = null
 
-    private var detectMove: Boolean = false
+    // représente la détection ou non d'un début de mouvement le plus souvent par le fait que le seuil minLineaY est atteint
+    private var detectBeginMove: Boolean = false
+    // représente si le mouvement détécté est de s'asseoir le plus souvent par le fait que le seuil maxLineaY est atteint
     private var currMoveIsSit: Boolean = false
-    private var moveEnd: Boolean = false
+    // représente si le mouvement de s'asseoir est fini le plus souvent par le fait que la valeur neutre est atteinte
+    private var moveSitEnd: Boolean = false
 
-    // sauvegarde de la dernière valeur du capteur pour pouvoir avoir une idée de la direction de la courbe.
-    private var lastLineaYValue: Double? = null
-    private var maxLineaYValue: Double = - 1.0
-    private var minLineaYValue: Double = 1.0
+    // représente la confirmation du mouvement de s'asseoir par le gyroscope
+    private var gyroXMinThreshold: Boolean = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -111,14 +106,13 @@ class SampleFragment: Fragment(), SensorEventListener {
     ): View {
         _binding = FragmentSampleBinding.inflate(inflater, container, false)
 
+        // dictionnaire de tous les mouvements affichable possible
         possibleMove = mapOf(
             1 to getString(R.string.move_top),
             2 to getString(R.string.move_down),
             3 to getString(R.string.move_bottom),
             4 to getString(R.string.move_up),
-            5 to getString(R.string.unknown_move),
-            6 to getString(R.string.move_right),
-            7 to getString(R.string.move_right)
+            5 to getString(R.string.unknown_move)
         )
 
         sensorManager = this.activity?.getSystemService(Context.SENSOR_SERVICE) as SensorManager
@@ -131,6 +125,7 @@ class SampleFragment: Fragment(), SensorEventListener {
         return binding.root
     }
 
+    // fonction qui enregistre un type de capteur passé en paramètre au sensor manager
     private fun registerSensorType(sensorType: Int) {
         sensorManager?.let { sensorManager ->
             val sensor: Sensor? = sensorManager.getDefaultSensor(sensorType)
@@ -143,7 +138,6 @@ class SampleFragment: Fragment(), SensorEventListener {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        Log.d("DATETIME", "onViewCreated")
         super.onViewCreated(view, savedInstanceState)
         lineaX = _binding?.root?.findViewById<View>(R.id.linea_x) as TextView
         lineaY = _binding?.root?.findViewById<View>(R.id.linea_y) as TextView
@@ -161,7 +155,6 @@ class SampleFragment: Fragment(), SensorEventListener {
 
         numberOfSit?.text = "0"
         currentMove?.text = getString(R.string.unknown_move)
-        incrementNumberOfSit()
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
@@ -171,42 +164,75 @@ class SampleFragment: Fragment(), SensorEventListener {
             val zValue = event.values[2]
             // traitement seulement si les valeurs proviennent de l'acceleromètre
             if (event.sensor.stringType.equals("android.sensor.linear_acceleration")) {
-                // assigne les valeurs du capteur aux textView respective
+                // assigne les valeurs du capteur aux textView respectifs
                 lineaX?.text = "$xValue"
                 lineaY?.text = "$yValue"
                 lineaZ?.text = "$zValue"
+
+                // sauvegarde dans la variable le temps actuel en millisecondes
                 val currentTimeInMillis = System.currentTimeMillis()
 
-                if (moveEnd) {
+                // si le mouvement considéré comme s'asseoir est fini et que le seuil minimal du gyroscope à été atteint alors on incremente le textView
+                if (moveSitEnd && gyroXMinThreshold) {
+                    Log.d("STEPS","Etape 6 position assise détéctée !")
                     changeCurrentMoveValue(3)
                     incrementNumberOfSit()
-                    moveEnd = false
-                    detectMove = false
+                    moveSitEnd = false
+                    detectBeginMove = false
                     currMoveIsSit = false
+                    gyroXMinThreshold = false
+                    timeToMaxMinInMillis = null
+                    timeToEndMoveInMillis = null
                 }
 
-                if (currMoveIsSit && currentTimeInMillis < timeToEndMoveInMillis!! && currentTimeInMillis > timeToMaxMinInMillis!!) {
+                if (currMoveIsSit && timeToEndMoveInMillis != null && timeToMaxMinInMillis != null
+                                && currentTimeInMillis < timeToEndMoveInMillis!! && currentTimeInMillis > timeToMaxMinInMillis!!) {
+                    // si le mouvement en cours est confirmé comme étant s'asseoir alors on va regarder s'il se termine avant la fin du temps moyen de ce mouvement
                     changeCurrentMoveValue(2)
-                    moveEnd = yValue.toDouble() in (neutral - rangeNeutral) .. (neutral + rangeNeutral)
+                    Log.d("STEPS","Etape 5 test fin de mouvement si lineaY est proche de la valeur de neutral.")
+                    // test si le mouvement est proche de la valeur neutre et donc que le mouvement est fini
+                    moveSitEnd = yValue.toDouble() in (neutral - rangeNeutral) .. (neutral + rangeNeutral)
 
-                } else if (detectMove && !moveEnd && timeToMaxMinInMillis != null && timeToEndMoveInMillis != null) {
+                } else if (detectBeginMove && !moveSitEnd && timeToMaxMinInMillis != null && timeToEndMoveInMillis != null) {
+                    Log.d("STEPS","Etape 3 acceleromètre test si le temps est écoulé.")
                     if (currentTimeInMillis < timeToEndMoveInMillis!!) {
+                        Log.d("STEPS","Etape 4 test si le seuil maximal lineaY est atteint.")
+                        // test si le seuil max de lineaX est atteint et donc confirme que le mouvement est s'asseoir
                         currMoveIsSit = isValueInThresholdRange(valueToTest = yValue.toDouble(), nameOfTheValue = "maxLineaY")
+                        // si ce n'est pas le cas alors le mouvement est se levé
                         if (!currMoveIsSit){
                             changeCurrentMoveValue(4)
                         }
                     } else {
+                        // si le temps moyen du mouvement est passé le mouvement n'est plus considéré comme s'asseoir
+                        Log.d("STEPS","Etape restart acceleromètre le temps est écoulé.")
                         changeCurrentMoveValue(1)
-                        detectMove = false
+                        detectBeginMove = false
+                        currMoveIsSit = false
+                        timeToMaxMinInMillis = null
+                        timeToEndMoveInMillis = null
                     }
-                } else if (!detectMove) {
+                } else if (!detectBeginMove) {
                     currMoveIsSit = false
-                    moveEnd = false
-                    detectMove = isValueInThresholdRange(valueToTest = yValue.toDouble(), nameOfTheValue = "minLineaY")
-                    if (detectMove) {
+                    moveSitEnd = false
+                    // si un mouvement n'a pas été détécté alors on test la valeur lineaY en cours pour savoir si elle égale au seuil minimal de lineaY
+                    Log.d("STEPS","Etape 1 test de la valeur de lineaY pour voir si le seuil minimal à été atteint")
+                    detectBeginMove = isValueInThresholdRange(valueToTest = yValue.toDouble(), nameOfTheValue = "minLineaY")
+                    if (detectBeginMove) {
+                        // si un mouvement est détécté on affecte les valeurs de temps
+                        Log.d("STEPS","Etape 2 le seuil minimal de lineaY à été atteint, définition du temps début mouvement.")
                         timeToMaxMinInMillis = currentTimeInMillis + durationMinMaxInMillis
                         timeToEndMoveInMillis = currentTimeInMillis + durationTotalOfSitMove
                     }
+                } else if (detectBeginMove && currMoveIsSit && moveSitEnd && currentTimeInMillis > timeToEndMoveInMillis!!) {
+                    // si le gyroscope ne valide pas le mouvement et que le temps est dépassé alors on recommence a chercher un mouvement
+                    Log.d("STEPS","Etape 6 restart quand moveSitEnd est à true mais que le seuil max de gyroY n'a pas été atteint.")
+                    moveSitEnd = false
+                    detectBeginMove = false
+                    currMoveIsSit = false
+                    gyroXMinThreshold = false
+                    timeToMaxMinInMillis = null
+                    timeToEndMoveInMillis = null
                 }
             }
             // traitement seulement si les valeurs proviennent du gyroscope
@@ -215,12 +241,28 @@ class SampleFragment: Fragment(), SensorEventListener {
                 gyroX?.text = "$xValue"
                 gyroY?.text = "$yValue"
                 gyroZ?.text = "$zValue"
+
+                // sauvegarde dans la variable le temps actuel en millisecondes
+                val currentTimeInMillis = System.currentTimeMillis()
+
+                if (detectBeginMove && !gyroXMinThreshold && currentTimeInMillis < timeToEndMoveInMillis!!) {
+                    // si on a détécté un mouvement
+                    Log.d("STEPS","Etape 3 gyroscope test si le seuil minimal de gyroX à été atteint.")
+                    gyroXMinThreshold = isValueInThresholdRange(valueToTest = xValue.toDouble(), nameOfTheValue = "minGyroX")
+                    Log.d("STEPS","$gyroXMinThreshold")
+                } else if (!detectBeginMove){
+                    Log.d("STEPS","Etape restart gyroscope le seuil minimal pour lineaX n'a pas été atteint")
+                    gyroXMinThreshold = false
+                }
             }
         }
     }
 
+    // test si une valeur passée en paramètre est considérable comme le seuil du nom de la valeur passé en paramètre
     private fun isValueInThresholdRange(valueToTest: Double, nameOfTheValue: String): Boolean {
+        // on récupère le seuil du nom de valeur passé en paramètre
         val thresholdForValueToTest: Double? = thresholds[nameOfTheValue]
+
         val rangeForValueToTest: Double? = ranges[nameOfTheValue]
         if (thresholdForValueToTest == null) {
             Toast.makeText(context, "No values in thresholds map for the name: $nameOfTheValue", Toast.LENGTH_LONG).show()
@@ -251,10 +293,6 @@ class SampleFragment: Fragment(), SensorEventListener {
             numberOfSitLayout?.setBackgroundColor(ResourcesCompat.getColor(resources, R.color.custom_blue, null))
             numberOfSitUpperLayout?.setBackgroundColor(ResourcesCompat.getColor(resources, R.color.custom_blue, null))
         }, 500)
-    }
-
-    private fun getAmplitude(xValue: Number, yValue: Number, zValue: Number): Double {
-        return sqrt(xValue.toDouble().pow(2) + yValue.toDouble().pow(2) + zValue.toDouble().pow(2))
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
